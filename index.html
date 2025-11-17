@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ITOA: Image to ASCII Converter</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="particles"></div>
+    <div id="container">
+        <h1>ITOA: Image to ASCII Converter</h1>
+        <p class="attribution">// by vivek teotia</p>
+        
+        <div id="controls">
+            <select id="density">
+                <option value="standard">Standard ASCII</option>
+                <option value="indian">Indian Scripts</option>
+            </select>
+            <button id="colors">Colors</button>
+            <button id="small">Small</button>
+            <button id="upload">Upload</button>
+            <button id="save">Save</button>
+            <button id="regenerate">Regenerate</button>
+        </div>
+        
+        <div id="dropzone">
+            <p>Drop image here (jpg / png / gif)</p>
+            <input type="file" id="fileInput" accept="image/*">
+        </div>
+        
+        <pre id="output"></pre>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
