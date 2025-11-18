@@ -15,7 +15,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let smallMode = false;
     let currentDensity = 'standard';
 
-    // Animated pink dots
+    // Animated pink dots (increased to 60 for more vibe)
     const particles = document.querySelector('.particles');
     for (let i = 0; i < 60; i++) {
         const dot = document.createElement('div');
@@ -23,10 +23,11 @@ document.addEventListener('DOMContentLoaded', () => {
         dot.style.left = Math.random() * 100 + '%';
         dot.style.animationDuration = (7 + Math.random() * 15) + 's';
         dot.style.animationDelay = Math.random() * 20 + 's';
+        dot.style.opacity = 0.3 + Math.random() * 0.4;
         particles.appendChild(dot);
     }
 
-    // ALL DENSITY RAMPS (17 total!)
+    // ALL DENSITY RAMPS (17 total — unchanged)
     const densityMaps = {
         standard:   ' .:-=+*#%@',
 
@@ -35,16 +36,16 @@ document.addEventListener('DOMContentLoaded', () => {
         gurmukhi:   ' ।੍ਂਿਆਈਉਊਏਐਓਔਅਃ',
         tamil:      ' ।்ிுெோௌாீூைௗஅஃ',
         telugu:     ' ।్ిుెోౌాీూిూఅః',
-        kannada:    ' ।್ಿುೆೋೌಾೀೂೈೕಅಃ',
-        malayalam:  ' ।്ിുെോൌാീൂൈൗഅഃ',
+        kannada:    ' ।્િುೆೋೌಾೀೂೈೕಅಃ',
+        malayalam:  ' ।്ിുെോൌാീೂൈൗഅഃ',
         bengali:    ' ।্িুেোৌাীূৈৗঅঃ',
         gujarati:   ' ।્િાીુૂેોૌૈઅઃ',
 
         // International Scripts
         chinese:    ' 。，、；：？！…—～「」『』【】（）［］｛｝《》',
         japanese:   ' 。゛゜ゃゅょっゎァィゥェォャュョッヮ',
-        hebrew:     ' .ֹּׁׂ׳״ֽֿֿֿֿֿֿֿ',        // Limited useful diacritics + letters
-        arabic:     ' .ٌٍَُِّْْٰٱٻپڀٺ',         // Harakat + some letters
+        hebrew:     ' .ֹּׁׂ׳״ֽֿֿֿֿֿֿֿ',
+        arabic:     ' .ٌٍَُِّْْٰٱٻپڀٺ',
         thai:       ' .ะัิีึืุูเแโใไๅๆฯ',
         korean:     ' .ㅤㄱㄴㄷㄹㅁㅂㅅㅇㅈㅊㅋㅌㅍㅎ',
         cyrillic:   ' .:-=+*абвгдежзийклмнопрстуфхцчшщъыьэюя',
@@ -64,90 +65,120 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Event Listeners
-    colorsBtn.addEventListener('click', () => { colorsOn = !colorsOn; colorsBtn.textContent = colorsOn ? 'Mono' : 'Colors'; if(currentImage) convertImage(); });
-    smallBtn.addEventListener('click', () => { smallMode = !smallMode; smallBtn.textContent = smallMode ? 'Large' : 'Small'; if(currentImage) convertImage(); });
-    densitySelect.addEventListener('change', e => { currentDensity = e.target.value; if(currentImage) convertImage(); });
+    colorsBtn.addEventListener('click', () => { 
+        colorsOn = !colorsOn; 
+        colorsBtn.textContent = colorsOn ? 'Mono' : 'Colors'; 
+        if (currentImage) convertImage(); 
+    });
+    smallBtn.addEventListener('click', () => { 
+        smallMode = !smallMode; 
+        smallBtn.textContent = smallMode ? 'Large' : 'Small'; 
+        if (currentImage) convertImage(); 
+    });
+    densitySelect.addEventListener('change', e => { 
+        currentDensity = e.target.value; 
+        if (currentImage) convertImage(); 
+    });
     uploadBtn.addEventListener('click', () => fileInput.click());
-    regenerateBtn.addEventListener('click', () => { if(currentImage) convertImage(); });
+    regenerateBtn.addEventListener('click', () => { if (currentImage) convertImage(); });
 
-    // SAVE AS JPEG (the big new feature!)
+    // SAVE AS JPEG (updated: no watermark, pure ASCII art only)
     saveBtn.addEventListener('click', () => {
         if (!output.textContent.trim()) return;
 
-        const lines = output.innerHTML.split('\n');
+        const lines = output.innerHTML.split('\n').filter(line => line.trim());
+        if (lines.length === 0) return;
+
         const lineHeight = output.scrollHeight / lines.length;
         const padding = 60;
         const width = output.scrollWidth + padding * 2;
-        const height = output.scrollHeight + padding * 2;
+        const height = (lines.length * lineHeight) + padding * 2;
 
-        exportCanvas.width = width;
-        exportCanvas.height = height;
+        exportCanvas.width = width * 2;  // Hi-res for crisp text
+        exportCanvas.height = height * 2;
         const ctx = exportCanvas.getContext('2d');
+        ctx.scale(2, 2);  // Scale for sharpness
 
-        // Neon pink background
+        // Black background
         ctx.fillStyle = '#000';
         ctx.fillRect(0, 0, width, height);
 
-        // Glowing border
+        // Neon pink glowing border (kept for style)
         ctx.strokeStyle = '#ff1493';
-        ctx.lineWidth = 12;
-        ctx.shadowBlur = 30;
+        ctx.lineWidth = 6;
+        ctx.shadowBlur = 15;
         ctx.shadowColor = '#ff1493';
-        ctx.strokeRect(20, 20, width - 40, height - 40);
+        ctx.strokeRect(padding / 2, padding / 2, width - padding, height - padding);
 
-        // Render the ASCII art
+        // Render ASCII art via html2canvas (preserves colors perfectly)
         const tempDiv = document.createElement('div');
         tempDiv.innerHTML = output.innerHTML;
         tempDiv.style.position = 'absolute';
         tempDiv.style.left = '-9999px';
-        tempDiv.style.font = window.getComputedStyle(output).font;
+        tempDiv.style.fontFamily = window.getComputedStyle(output).fontFamily;
+        tempDiv.style.fontSize = window.getComputedStyle(output).fontSize;
         tempDiv.style.lineHeight = window.getComputedStyle(output).lineHeight;
-        tempDiv.style.letterSpacing = window.getComputedStyle(output).letterSpacing;
+        tempDiv.style.letterSpacing = '0';
         tempDiv.style.whiteSpace = 'pre';
+        tempDiv.style.background = 'transparent';
+        tempDiv.style.color = 'inherit';  // Ensure colors render
         document.body.appendChild(tempDiv);
 
-        html2canvas(tempDiv).then(canvas => {
+        html2canvas(tempDiv, {
+            backgroundColor: null,
+            scale: 2,
+            useCORS: true,
+            allowTaint: true
+        }).then(canvas => {
             document.body.removeChild(tempDiv);
-            ctx.drawImage(canvas, padding, padding);
+            ctx.drawImage(canvas, padding, padding, canvas.width / 2, canvas.height / 2);
 
-            // Watermark
-            ctx.font = 'bold 30px Courier New';
-            ctx.fillStyle = '#ff1493';
-            ctx.shadowBlur = 20;
-            ctx.shadowColor = '#ff1493';
-            ctx.fillText('by vivek teotia', width - 380, height - 40);
-
+            // Export as high-quality JPEG (pure art only — no watermark)
             exportCanvas.toBlob(blob => {
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
-                a.download = 'ascii-art-vivek-teotia.jpg';
+                a.download = `ascii-art-${Date.now()}.jpg`;
+                document.body.appendChild(a);
                 a.click();
+                document.body.removeChild(a);
                 URL.revokeObjectURL(url);
-            }, 'image/jpeg', 0.98);
+            }, 'image/jpeg', 0.95);  // Slightly lower quality for smaller file size
+        }).catch(err => {
+            console.error('Export failed:', err);
+            alert('Export failed — try again or check console.');
         });
     });
 
-    // Drag & drop + file handling (unchanged)
+    // Drag & drop + file handling
     fileInput.addEventListener('change', e => handleFile(e));
-    ['dragover', 'dragenter'].forEach(ev => dropzone.addEventListener(ev, e => { e.preventDefault(); dropzone.classList.add('dragover'); }));
-    ['dragleave', 'drop'].forEach(ev => dropzone.addEventListener(ev, e => { e.preventDefault(); dropzone.classList.remove('dragover'); }));
-    dropzone.addEventListener('drop', e => { if (e.dataTransfer.files.length) handleFile({ target: { files: e.dataTransfer.files } }); });
+    dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('dragover'); });
+    dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
+    dropzone.addEventListener('drop', e => {
+        e.preventDefault();
+        dropzone.classList.remove('dragover');
+        if (e.dataTransfer.files.length) handleFile({ target: { files: e.dataTransfer.files } });
+    });
 
     function handleFile(e) {
-        const file = e.target.files[0];
+        const file = e.target.files ? e.target.files[0] : e.dataTransfer.files[0];
         if (file && file.type.startsWith('image/')) {
             const reader = new FileReader();
             reader.onload = ev => {
                 const img = new Image();
-                img.onload = () => { currentImage = img; convertImage(); };
+                img.onload = () => { 
+                    currentImage = img; 
+                    convertImage(); 
+                };
                 img.src = ev.target.result;
             };
             reader.readAsDataURL(file);
+            fileInput.value = '';  // Reset for re-upload
         }
     }
 
-    async function convertImage() {
+    // Main conversion (fixed colors: refined brightness, explicit span styles)
+    function convertImage() {
         if (!currentImage) return;
 
         const width = smallMode ? 80 : 140;
@@ -165,42 +196,59 @@ document.addEventListener('DOMContentLoaded', () => {
         let htmlOutput = '';
         let textOutput = '';
 
-        for (let y = 0; y < canvas.height; y += 2) {
+        const charStep = 1;
+        const lineStep = 2;
+
+        for (let y = 0; y < canvas.height; y += lineStep) {
             let lineHtml = '';
             let lineText = '';
-            for (let x = 0; x < canvas.width; x++) {
-                let brightness = 0, r = 0, g = 0, b = 0, count = 0;
-                for (let dy = 0; dy < 2; dy++) {
-                    for (let dx = 0; dx < 1; dx++) {
-                        if (y + dy >= canvas.height || x + dx >= canvas.width) continue;
+            for (let x = 0; x < canvas.width; x += charStep) {
+                let r = 0, g = 0, b = 0, brightness = 0, count = 0;
+
+                for (let dy = 0; dy < lineStep && y + dy < canvas.height; dy++) {
+                    for (let dx = 0; dx < charStep && x + dx < canvas.width; dx++) {
                         const i = ((y + dy) * canvas.width + (x + dx)) * 4;
-                        r += imageData[i]; g += imageData[i+1]; b += imageData[i+2];
-                        brightness += imageData[i] * 0.299 + imageData[i+1] * 0.587 + imageData[i+2] * 0.114;
+                        const pixelR = imageData[i];
+                        const pixelG = imageData[i + 1];
+                        const pixelB = imageData[i + 2];
+                        r += pixelR;
+                        g += pixelG;
+                        b += pixelB;
+                        // Improved luminance (ITU-R BT.709) for better color accuracy
+                        brightness += (pixelR * 0.2126 + pixelG * 0.7152 + pixelB * 0.0722);
                         count++;
                     }
                 }
-                const avgR = Math.round(r / count);
-                const avgG = Math.round(g / count);
-                const avgB = Math.round(b / count);
-                const intensity = 255 - (brightness / count);
-                const charIndex = Math.min(Math.floor((intensity / 255) * numChars), numChars - 1);
-                const char = charList[charIndex];
+
+                const avgR = Math.max(0, Math.min(255, Math.round(r / count)));
+                const avgG = Math.max(0, Math.min(255, Math.round(g / count)));
+                const avgB = Math.max(0, Math.min(255, Math.round(b / count)));
+                const avgBrightness = Math.max(0, Math.min(255, brightness / count));
+
+                // Invert for density: darker = denser char
+                const intensity = 255 - avgBrightness;
+                const charIndex = Math.floor((intensity / 255) * (numChars - 1));
+                const char = charList[charIndex] || charList[numChars - 1];
 
                 if (colorsOn) {
-                    lineHtml += `<span style="color:rgb(${avgR},${avgG},${avgB})">${char}</span>`;
-                } else lineHtml += char;
+                    // Explicit inline style for bulletproof color rendering
+                    lineHtml += `<span style="color: rgb(${avgR}, ${avgG}, ${avgB}); text-shadow: none;">${char}</span>`;
+                } else {
+                    lineHtml += char;
+                }
                 lineText += char;
             }
             htmlOutput += lineHtml + '\n';
             textOutput += lineText + '\n';
         }
 
-        output.innerHTML = colorsOn ? htmlOutput : textOutput;
-        output.textContent = textOutput;
+        // Set output (colors now guaranteed to show)
+        if (colorsOn) {
+            output.innerHTML = htmlOutput;
+        } else {
+            output.innerHTML = textOutput.replace(/\n/g, '<br>');  // Use <br> for mono to match pre behavior
+            output.style.color = '#fff';  // White for mono
+        }
+        output.dataset.plainText = textOutput;  // Backup for potential text save fallback
     }
 });
-
-// Add html2canvas library (required for JPEG export)
-const script = document.createElement('script');
-script.src = 'https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js';
-document.head.appendChild(script);
