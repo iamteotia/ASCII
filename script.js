@@ -14,9 +14,9 @@ document.addEventListener('DOMContentLoaded', () => {
     let colorsOn = false;
     let smallMode = false;
     let currentDensity = 'standard';
-    let lastCharWidth = 140;  // Will be updated after each conversion
+    let originalDimensions = { width: 0, height: 0 };
 
-    // Particles
+    // Animated particles
     for (let i = 0; i < 60; i++) {
         const dot = document.createElement('div');
         dot.className = 'dot';
@@ -26,17 +26,17 @@ document.addEventListener('DOMContentLoaded', () => {
         document.querySelector('.particles').appendChild(dot);
     }
 
-    // All density maps (same as before)
+    // All 17 density maps
     const densityMaps = {
         standard: ' .:-=+*#%@',
-        devanagari: ' ।॑ंि bookmarkआईउऊऋएऐओऔअः',
+        devanagari: ' ।॑ंिआईउऊऋएऐओऔअः',
         gurmukhi: ' ।੍ਂਿਆਈਉਊਏਐਓਔਅਃ',
         tamil: ' ।்ிுெோௌாீூைௗஅஃ',
-        telugu: ' ।్ిుెోౌాೀూಿూఅః',
-        kannada: ' ।್ಿುೆೋೌಾೀೂೈೕಅಃ',
-        malayalam: ' ।്ിുെോൌാೀൂൈൗഅഃ',
-        bengali: ' ।্িুেোৌাೀূৈৗঅঃ',
-        gujarati: ' ।્િાીુૂેોૌૈઅઃ',
+        telugu: ' ।্িుెోౌాీూిూఅః',
+        kannada: ' ।്ിುೆೋೌಾೀೂೂೈೕಅಃ',
+        malayalam: ' ।്ിുെോൌാീൂൈൗഅഃ',
+        bengali: ' ।्িুেোৌাীূৈৗঅঃ',
+        gujarati: ' ।୍ાીુૂેોૌૈઅઃ',
         chinese: ' 。，、；：？！…—～「」『』【】（）［］｛｝《》',
         japanese: ' 。゛゜ゃゅょっゎァィゥェォャュョッヮ',
         hebrew: ' .ֹּׁׂ׳״ֽֿ',
@@ -62,109 +62,111 @@ document.addEventListener('DOMContentLoaded', () => {
     uploadBtn.addEventListener('click', () => fileInput.click());
     regenerateBtn.addEventListener('click', () => { if(currentImage) convertImage(); });
 
-    // PERFECT SAVE — same size as original image, no border, full art
+    // PURE JPEG EXPORT: Exact original dimensions, NO borders/padding
     saveBtn.addEventListener('click', () => {
         if (!currentImage || !output.textContent.trim()) return;
 
+        const origW = originalDimensions.width;
+        const origH = originalDimensions.height;
+
         html2canvas(output, {
-            scale: 1,
-            backgroundColor: null,
+            scale: 3,  // Higher scale for crisp ASCII at large sizes
+            backgroundColor: '#000',
             logging: false,
-            width: output.scrollWidth,
-            height: output.scrollHeight
-        }).then(canvas => {
-            // Create final canvas with exact original image dimensions
-            exportCanvas.width = currentImage.width;
-            exportCanvas.height = currentImage.height;
+            useCORS: true
+        }).then(tempCanvas => {
+            // Create export canvas at EXACT original dimensions
+            exportCanvas.width = origW;
+            exportCanvas.height = origH;
             const ctx = exportCanvas.getContext('2d');
 
-            // Fill black background
+            // Black background fill
             ctx.fillStyle = '#000';
-            ctx.fillRect(0, 0, exportCanvas.width, exportCanvas.height);
+            ctx.fillRect(0, 0, origW, origH);
 
-            // Calculate scaling to fit ASCII art perfectly into original dimensions
-            const scaleX = currentImage.width / canvas.width;
-            const scaleY = currentImage.height / canvas.height;
-            const scale = Math.max(scaleX, scaleY);  // Maintain aspect ratio
+            // Scale & draw ASCII canvas to fit exactly (no borders, no padding)
+            ctx.drawImage(tempCanvas, 0, 0, origW, origH);
 
-            const drawWidth = canvas.width * scale;
-            const drawHeight = canvas.height * scale;
-            const offsetX = (currentImage.width - drawWidth) / 2;
-            const offsetY = (currentImage.height - drawHeight) / 2;
-
-            ctx.drawImage(canvas, offsetX, offsetY, drawWidth, drawHeight);
-
-            // Download
+            // Download as JPEG
             exportCanvas.toBlob(blob => {
                 const a = document.createElement('a');
                 a.href = URL.createObjectURL(blob);
-                a.download = 'ascii-art-fullsize.jpg';
+                a.download = 'ascii-art.jpg';
+                document.body.appendChild(a);
                 a.click();
+                document.body.removeChild(a);
                 URL.revokeObjectURL(a.href);
-            }, 'img/jpeg', 0.95);
+            }, 'image/jpeg', 0.98);  // High quality
+        }).catch(err => {
+            console.error('Export error:', err);
+            alert('Export failed – check console for details.');
         });
     });
 
-    // Drag & drop + file
-    ['dragover', 'dragenterter'].forEach(e => dropzone.addEventListener(e, ev => { ev.preventDefault(); dropzone.classList.add('dragover'); }));
+    // Drag & drop
+    ['dragover', 'dragenter'].forEach(e => dropzone.addEventListener(e, ev => { ev.preventDefault(); dropzone.classList.add('dragover'); }));
     ['dragleave', 'drop'].forEach(e => dropzone.addEventListener(e, ev => { ev.preventDefault(); dropzone.classList.remove('dragover'); }));
     dropzone.addEventListener('drop', e => { if (e.dataTransfer.files[0]) handleFile({target:{files: e.dataTransfer.files}}); });
     fileInput.addEventListener('change', handleFile);
 
     function handleFile(e) {
-        const file = e.target.files[0];
+        const file = e.target.files ? e.target.files[0] : e.dataTransfer.files[0];
         if (file && file.type.startsWith('image/')) {
             const reader = new FileReader();
             reader.onload = ev => {
                 const img = new Image();
-                img.onload = () => { currentImage = img; convertImage(); };
+                img.onload = () => { 
+                    currentImage = img;
+                    originalDimensions = { width: img.naturalWidth, height: img.naturalHeight };  // Capture original dims
+                    convertImage(); 
+                };
                 img.src = ev.target.result;
             };
             reader.readAsDataURL(file);
+            if (e.target) e.target.value = '';  // Reset input
         }
     }
 
     function convertImage() {
         if (!currentImage) return;
 
-        const charWidth = smallMode ? 80 : 140;
-        lastCharWidth = charWidth;
+        // Use original aspect for char grid (higher res for better detail)
+        const aspect = originalDimensions.height / originalDimensions.width;
+        const charWidth = smallMode ? 120 : 200;  // More chars for finer detail
+        const charHeight = Math.round(charWidth * aspect);
 
         const canvas = document.createElement('canvas');
-        const aspect = currentImage.height / currentImage.width;
         canvas.width = charWidth;
-        canvas.height = Math.round(charWidth * aspect * 0.55);
+        canvas.height = charHeight;
         const ctx = canvas.getContext('2d');
-        ctx.drawImage(currentImage, 0, 0, canvas.width, canvas.height);
-        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+        ctx.drawImage(currentImage, 0, 0, charWidth, charHeight);
+        const imageData = ctx.getImageData(0, 0, charWidth, charHeight).data;
 
-        const chars = densityMaps[currentDensity] || densityMaps.standard;
+        const chars = densityMaps[currentDensity];
         let html = '';
 
-        for (let y = 0; y < canvas.height; y += 2) {
-            for (let x = 0; x < canvas.width; x += 1) {
-                let r = 0, g = 0, b = 0, lum = 0, count = 0;
-
-                for (let dy = 0; dy < 2 && y + dy < canvas.height; dy++) {
-                    for (let dx = 0; dx < 1; dx++) {
-                        const i = ((y + dy) * canvas.width + x) * 4;
+        for (let y = 0; y < charHeight; y += 2) {  // Line sampling for density
+            for (let x = 0; x < charWidth; x += 1) {
+                let r = 0, g = 0, b = 0, lum = 0, samples = 0;
+                for (let dy = 0; dy < 2 && y + dy < charHeight; dy++) {
+                    for (let dx = 0; dx < 1 && x + dx < charWidth; dx++) {
+                        const i = ((y + dy) * charWidth + (x + dx)) * 4;
                         r += imageData[i];
                         g += imageData[i + 1];
                         b += imageData[i + 2];
-                        lum += imageData[i] * 0.2126 + imageData[i + 1] * 0.7152 + imageData[i + 2] * 0.0722;
-                        count++;
+                        lum += (imageData[i] * 0.2126 + imageData[i + 1] * 0.7152 + imageData[i + 2] * 0.0722);
+                        samples++;
                     }
                 }
-
-                const avgR = Math.round(r / count);
-                const avgG = Math.round(g / count);
-                const avgB = Math.round(b / count);
-                const intensity = 255 - (lum / count);
-                const index = Math.min(Math.floor(intensity / 255 * (chars.length - 1)), chars.length - 1);
+                const avgR = Math.round(r / samples);
+                const avgG = Math.round(g / samples);
+                const avgB = Math.round(b / samples);
+                const intensity = 255 - (lum / samples);
+                const index = Math.floor((intensity / 255) * (chars.length - 1));
                 const ch = chars[index];
 
                 if (colorsOn) {
-                    html += `<span style="color:rgb(${avgR},${avgG},${avgB})">${ch}</span>`;
+                    html += `<span style="color:rgb(${avgR},${avgG},${avgB}); text-shadow:none;">${ch}</span>`;
                 } else {
                     html += ch;
                 }
