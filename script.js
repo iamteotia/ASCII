@@ -15,169 +15,113 @@ document.addEventListener('DOMContentLoaded', () => {
     let smallMode = false;
     let currentDensity = 'standard';
 
-    // Animated pink dots (increased to 60 for more vibe)
-    const particles = document.querySelector('.particles');
+    // Animated particles
     for (let i = 0; i < 60; i++) {
         const dot = document.createElement('div');
         dot.className = 'dot';
         dot.style.left = Math.random() * 100 + '%';
         dot.style.animationDuration = (7 + Math.random() * 15) + 's';
         dot.style.animationDelay = Math.random() * 20 + 's';
-        dot.style.opacity = 0.3 + Math.random() * 0.4;
-        particles.appendChild(dot);
+        document.querySelector('.particles').appendChild(dot);
     }
 
-    // ALL DENSITY RAMPS (17 total — unchanged)
+    // All 17 density maps
     const densityMaps = {
-        standard:   ' .:-=+*#%@',
-
-        // Indian Scripts
+        standard: ' .:-=+*#%@',
         devanagari: ' ।॑ंिआईउऊऋएऐओऔअः',
-        gurmukhi:   ' ।੍ਂਿਆਈਉਊਏਐਓਔਅਃ',
-        tamil:      ' ।்ிுெோௌாீூைௗஅஃ',
-        telugu:     ' ।్ిుెోౌాీూిూఅః',
-        kannada:    ' ।્િುೆೋೌಾೀೂೈೕಅಃ',
-        malayalam:  ' ।്ിുെോൌാീೂൈൗഅഃ',
-        bengali:    ' ।্িুেোৌাীূৈৗঅঃ',
-        gujarati:   ' ।્િાીુૂેોૌૈઅઃ',
-
-        // International Scripts
-        chinese:    ' 。，、；：？！…—～「」『』【】（）［］｛｝《》',
-        japanese:   ' 。゛゜ゃゅょっゎァィゥェォャュョッヮ',
-        hebrew:     ' .ֹּׁׂ׳״ֽֿֿֿֿֿֿֿ',
-        arabic:     ' .ٌٍَُِّْْٰٱٻپڀٺ',
-        thai:       ' .ะัิีึืุูเแโใไๅๆฯ',
-        korean:     ' .ㅤㄱㄴㄷㄹㅁㅂㅅㅇㅈㅊㅋㅌㅍㅎ',
-        cyrillic:   ' .:-=+*абвгдежзийклмнопрстуфхцчшщъыьэюя',
-        greek:      ' .·¨˙˚˝˛ˇάέήίϊΐόύϋΰώ'
+        gurmukhi: ' ।੍ਂਿਆਈਉਊਏਐਓਔਅਃ',
+        tamil: ' ।்ிுெோௌாீூைௗஅஃ',
+        telugu: ' ।్ిుెోౌాీూిూఅః',
+        kannada: ' ।್ಿುೆೋೌಾೀೂೈೕಅಃ',
+        malayalam: ' ।್ಿുെോൌാീൂൈൗഅഃ',
+        bengali: ' ।্িুেোৌাীূৈৗঅঃ',
+        gujarati: ' ।્િાીુૂેોૌૈઅઃ',
+        chinese: ' 。，、；：？！…—～「」『』【】（）［］｛｝《》',
+        japanese: ' 。゛゜ゃゅょっゎァィゥェォャュョッヮ',
+        hebrew: ' .ֹּׁׂ׳״ֽֿ',
+        arabic: ' .ٌٍَُِّْْٰٱٻپڀٺ',
+        thai: ' .ะัิีึืุูเแโใไๅๆฯ',
+        korean: ' .ㅤㄱㄴㄷㄹㅁㅂㅅㅇㅈㅊㅋㅌㅍㅎ',
+        cyrillic: ' .:-=+*абвгдежзийклмнопрстуфхцчшщъыьэюя',
+        greek: ' .·¨˙˚˝˛ˇάέήίϊΐόύϋΰώ'
     };
 
-    // Populate dropdown
     Object.keys(densityMaps).forEach(key => {
-        const opt = document.createElement('option');
-        opt.value = key;
-        if (key === 'standard') {
-            opt.textContent = 'Standard ASCII';
-        } else {
+        if (key !== 'standard') {
+            const opt = document.createElement('option');
+            opt.value = key;
             opt.textContent = key.charAt(0).toUpperCase() + key.slice(1) + ' Script';
+            densitySelect.appendChild(opt);
         }
-        densitySelect.appendChild(opt);
     });
 
-    // Event Listeners
-    colorsBtn.addEventListener('click', () => { 
-        colorsOn = !colorsOn; 
-        colorsBtn.textContent = colorsOn ? 'Mono' : 'Colors'; 
-        if (currentImage) convertImage(); 
-    });
-    smallBtn.addEventListener('click', () => { 
-        smallMode = !smallMode; 
-        smallBtn.textContent = smallMode ? 'Large' : 'Small'; 
-        if (currentImage) convertImage(); 
-    });
-    densitySelect.addEventListener('change', e => { 
-        currentDensity = e.target.value; 
-        if (currentImage) convertImage(); 
-    });
+    colorsBtn.addEventListener('click', () => { colorsOn = !colorsOn; colorsBtn.textContent = colorsOn ? 'Mono' : 'Colors'; if(currentImage) convertImage(); });
+    smallBtn.addEventListener('click', () => { smallMode = !smallMode; smallBtn.textContent = smallMode ? 'Large' : 'Small'; if(currentImage) convertImage(); });
+    densitySelect.addEventListener('change', e => { currentDensity = e.target.value; if(currentImage) convertImage(); });
     uploadBtn.addEventListener('click', () => fileInput.click());
-    regenerateBtn.addEventListener('click', () => { if (currentImage) convertImage(); });
+    regenerateBtn.addEventListener('click', () => { if(currentImage) convertImage(); });
 
-    // SAVE AS JPEG (updated: no watermark, pure ASCII art only)
+    // PURE JPEG EXPORT – no watermark at all
     saveBtn.addEventListener('click', () => {
         if (!output.textContent.trim()) return;
 
-        const lines = output.innerHTML.split('\n').filter(line => line.trim());
-        if (lines.length === 0) return;
+        const padding = 80;
+        const borderWidth = 12;
 
-        const lineHeight = output.scrollHeight / lines.length;
-        const padding = 60;
-        const width = output.scrollWidth + padding * 2;
-        const height = (lines.length * lineHeight) + padding * 2;
-
-        exportCanvas.width = width * 2;  // Hi-res for crisp text
-        exportCanvas.height = height * 2;
-        const ctx = exportCanvas.getContext('2d');
-        ctx.scale(2, 2);  // Scale for sharpness
-
-        // Black background
-        ctx.fillStyle = '#000';
-        ctx.fillRect(0, 0, width, height);
-
-        // Neon pink glowing border (kept for style)
-        ctx.strokeStyle = '#ff1493';
-        ctx.lineWidth = 6;
-        ctx.shadowBlur = 15;
-        ctx.shadowColor = '#ff1493';
-        ctx.strokeRect(padding / 2, padding / 2, width - padding, height - padding);
-
-        // Render ASCII art via html2canvas (preserves colors perfectly)
-        const tempDiv = document.createElement('div');
-        tempDiv.innerHTML = output.innerHTML;
-        tempDiv.style.position = 'absolute';
-        tempDiv.style.left = '-9999px';
-        tempDiv.style.fontFamily = window.getComputedStyle(output).fontFamily;
-        tempDiv.style.fontSize = window.getComputedStyle(output).fontSize;
-        tempDiv.style.lineHeight = window.getComputedStyle(output).lineHeight;
-        tempDiv.style.letterSpacing = '0';
-        tempDiv.style.whiteSpace = 'pre';
-        tempDiv.style.background = 'transparent';
-        tempDiv.style.color = 'inherit';  // Ensure colors render
-        document.body.appendChild(tempDiv);
-
-        html2canvas(tempDiv, {
-            backgroundColor: null,
+        html2canvas(output, {
             scale: 2,
-            useCORS: true,
-            allowTaint: true
+            backgroundColor: '#000',
+            logging: false
         }).then(canvas => {
-            document.body.removeChild(tempDiv);
-            ctx.drawImage(canvas, padding, padding, canvas.width / 2, canvas.height / 2);
+            exportCanvas.width = canvas.width + padding * 2 + borderWidth * 2;
+            exportCanvas.height = canvas.height + padding * 2 + borderWidth * 2;
+            const ctx = exportCanvas.getContext('2d');
 
-            // Export as high-quality JPEG (pure art only — no watermark)
+            // Black background
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, exportCanvas.width, exportCanvas.height);
+
+            // Neon pink glowing border
+            ctx.lineWidth = borderWidth;
+            ctx.strokeStyle = '#ff1493';
+            ctx.shadowBlur = 30;
+            ctx.shadowColor = '#ff1493';
+            ctx.strokeRect(borderWidth/2, borderWidth/2, exportCanvas.width - borderWidth, exportCanvas.height - borderWidth);
+
+            // Draw the ASCII art
+            ctx.shadowBlur = 0;
+            ctx.drawImage(canvas, padding + borderWidth/2, padding + borderWidth/2);
+
+            // Download
             exportCanvas.toBlob(blob => {
-                const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
-                a.href = url;
-                a.download = `ascii-art-${Date.now()}.jpg`;
-                document.body.appendChild(a);
+                a.href = URL.createObjectURL(blob);
+                a.download = 'ascii-art.jpg';
                 a.click();
-                document.body.removeChild(a);
-                URL.revokeObjectURL(url);
-            }, 'image/jpeg', 0.95);  // Slightly lower quality for smaller file size
-        }).catch(err => {
-            console.error('Export failed:', err);
-            alert('Export failed — try again or check console.');
+                URL.revokeObjectURL(a.href);
+            }, 'image/jpeg', 0.95);
         });
     });
 
-    // Drag & drop + file handling
-    fileInput.addEventListener('change', e => handleFile(e));
-    dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('dragover'); });
-    dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
-    dropzone.addEventListener('drop', e => {
-        e.preventDefault();
-        dropzone.classList.remove('dragover');
-        if (e.dataTransfer.files.length) handleFile({ target: { files: e.dataTransfer.files } });
-    });
+    // Drag & drop
+    ['dragover', 'dragenter'].forEach(e => dropzone.addEventListener(e, ev => { ev.preventDefault(); dropzone.classList.add('dragover'); }));
+    ['dragleave', 'drop'].forEach(e => dropzone.addEventListener(e, ev => { ev.preventDefault(); dropzone.classList.remove('dragover'); }));
+    dropzone.addEventListener('drop', e => { if (e.dataTransfer.files[0]) handleFile({target:{files: e.dataTransfer.files}}); });
+    fileInput.addEventListener('change', handleFile);
 
     function handleFile(e) {
-        const file = e.target.files ? e.target.files[0] : e.dataTransfer.files[0];
+        const file = e.target.files[0];
         if (file && file.type.startsWith('image/')) {
             const reader = new FileReader();
             reader.onload = ev => {
                 const img = new Image();
-                img.onload = () => { 
-                    currentImage = img; 
-                    convertImage(); 
-                };
+                img.onload = () => { currentImage = img; convertImage(); };
                 img.src = ev.target.result;
             };
             reader.readAsDataURL(file);
-            fileInput.value = '';  // Reset for re-upload
         }
     }
 
-    // Main conversion (fixed colors: refined brightness, explicit span styles)
     function convertImage() {
         if (!currentImage) return;
 
@@ -188,67 +132,40 @@ document.addEventListener('DOMContentLoaded', () => {
         canvas.height = Math.round(width * aspect * 0.55);
         const ctx = canvas.getContext('2d');
         ctx.drawImage(currentImage, 0, 0, canvas.width, canvas.height);
-
         const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
-        const charList = densityMaps[currentDensity] || densityMaps.standard;
-        const numChars = charList.length;
 
-        let htmlOutput = '';
-        let textOutput = '';
+        const chars = densityMaps[currentDensity];
+        let html = '';
 
-        const charStep = 1;
-        const lineStep = 2;
-
-        for (let y = 0; y < canvas.height; y += lineStep) {
-            let lineHtml = '';
-            let lineText = '';
-            for (let x = 0; x < canvas.width; x += charStep) {
-                let r = 0, g = 0, b = 0, brightness = 0, count = 0;
-
-                for (let dy = 0; dy < lineStep && y + dy < canvas.height; dy++) {
-                    for (let dx = 0; dx < charStep && x + dx < canvas.width; dx++) {
+        for (let y = 0; y < canvas.height; y += 2) {
+            for (let x = 0; x < canvas.width; x += 1) {
+                let r = 0, g = 0, b = 0, lum = 0, samples = 0;
+                for (let dy = 0; dy < 2; dy++) {
+                    for (let dx = 0; dx < 1; dx++) {
+                        if (y + dy >= canvas.height || x + dx >= canvas.width) continue;
                         const i = ((y + dy) * canvas.width + (x + dx)) * 4;
-                        const pixelR = imageData[i];
-                        const pixelG = imageData[i + 1];
-                        const pixelB = imageData[i + 2];
-                        r += pixelR;
-                        g += pixelG;
-                        b += pixelB;
-                        // Improved luminance (ITU-R BT.709) for better color accuracy
-                        brightness += (pixelR * 0.2126 + pixelG * 0.7152 + pixelB * 0.0722);
-                        count++;
+                        r += imageData[i];
+                        g += imageData[i+1];
+                        b += imageData[i+2];
+                        lum += imageData[i] * 0.2126 + imageData[i+1] * 0.7152 + imageData[i+2] * 0.0722;
+                        samples++;
                     }
                 }
-
-                const avgR = Math.max(0, Math.min(255, Math.round(r / count)));
-                const avgG = Math.max(0, Math.min(255, Math.round(g / count)));
-                const avgB = Math.max(0, Math.min(255, Math.round(b / count)));
-                const avgBrightness = Math.max(0, Math.min(255, brightness / count));
-
-                // Invert for density: darker = denser char
-                const intensity = 255 - avgBrightness;
-                const charIndex = Math.floor((intensity / 255) * (numChars - 1));
-                const char = charList[charIndex] || charList[numChars - 1];
+                const avgR = Math.round(r / samples);
+                const avgG = Math.round(g / samples);
+                const avgB = Math.round(b / samples);
+                const intensity = 255 - (lum / samples);
+                const index = Math.floor(intensity / 255 * (chars.length - 1));
+                const ch = chars[index];
 
                 if (colorsOn) {
-                    // Explicit inline style for bulletproof color rendering
-                    lineHtml += `<span style="color: rgb(${avgR}, ${avgG}, ${avgB}); text-shadow: none;">${char}</span>`;
+                    html += `<span style="color:rgb(${avgR},${avgG},${avgB})">${ch}</span>`;
                 } else {
-                    lineHtml += char;
+                    html += ch;
                 }
-                lineText += char;
             }
-            htmlOutput += lineHtml + '\n';
-            textOutput += lineText + '\n';
+            html += '\n';
         }
-
-        // Set output (colors now guaranteed to show)
-        if (colorsOn) {
-            output.innerHTML = htmlOutput;
-        } else {
-            output.innerHTML = textOutput.replace(/\n/g, '<br>');  // Use <br> for mono to match pre behavior
-            output.style.color = '#fff';  // White for mono
-        }
-        output.dataset.plainText = textOutput;  // Backup for potential text save fallback
+        output.innerHTML = html;
     }
 });
